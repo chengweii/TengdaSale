@@ -20,9 +20,10 @@
             android:gravity="center"
             android:layout_height="wrap_content"
             android:layout_marginTop="60dp"
-            android:text="Hello World!"/>
+            android:textSize="32dp"
+            android:text="请扫描配件二维码"/>
 
-    <NumberPicker
+    <com.example.xch.scanzbar.zbar.view.TextConfigNumberPicker
             android:id="@+id/num_input"
             android:layout_marginTop="20dp"
             android:layout_width="wrap_content"
@@ -41,7 +42,7 @@
                 android:layout_weight="1">
             <Button
                     android:id="@+id/btn_scan2"
-                    android:layout_marginTop="20dp"
+                    android:layout_margin="30dp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -54,7 +55,7 @@
                 android:layout_weight="1">
             <Button
                     android:id="@+id/btn_scan3"
-                    android:layout_marginTop="20dp"
+                    android:layout_margin="30dp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"

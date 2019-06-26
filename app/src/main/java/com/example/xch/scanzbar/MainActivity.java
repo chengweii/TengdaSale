@@ -54,10 +54,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         num_input = (NumberPicker) findViewById(R.id.num_input);
         //设置需要显示的内容数组
-        num_input.setDisplayedValues(numbers);
+        //num_input.setDisplayedValues(numbers);
         //设置最大最小值
         num_input.setMinValue(1);
-        num_input.setMaxValue(numbers.length);
+        num_input.setMaxValue(100);
         //设置默认的位置
         num_input.setValue(1);
     }
@@ -87,7 +87,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void request(final String type) {
         try {
             new AnsyTry("https://used-api.jd.com/auction/detail?auctionId=114830306", (response) -> {
-                Toast.makeText(MainActivity.this, response, Toast.LENGTH_SHORT).show();
                 if (response != null) {
                     try {
                         Detail detail = JSON.parseObject(response, Detail.class);
