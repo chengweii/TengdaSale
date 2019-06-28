@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="Gradle: com.github.xuexiangjys:XQRCode-1.0.5">
+    <CLASSES>
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-1/files-1.1/XQRCode-1.0.5.aar/64d9d1b10a98eac5c3b0cbac1458a268/res" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-1/files-1.1/XQRCode-1.0.5.aar/64d9d1b10a98eac5c3b0cbac1458a268/jars/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.xuexiangjys/XQRCode/1.0.5/d7948d9f000e6440ee129d74e2bcdd5b0943a4a2/XQRCode-1.0.5-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
