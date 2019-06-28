@@ -8,7 +8,7 @@
 
     <Button
             android:id="@+id/btn_scan"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="10dp"
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:layout_gravity="center"
@@ -19,13 +19,24 @@
             android:layout_width="match_parent"
             android:gravity="center"
             android:layout_height="wrap_content"
-            android:layout_marginTop="60dp"
-            android:textSize="32dp"
+            android:layout_marginTop="10dp"
+            android:textSize="32sp"
             android:text="请扫描配件二维码"/>
+
+    <EditText
+            android:id="@+id/phonenumber"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:layout_marginTop="10dp"
+            android:padding="1dp"
+            android:hint="请输入金额"
+            android:inputType="phone"
+            android:textSize="32sp" />
 
     <com.example.xch.scanzbar.zbar.view.TextConfigNumberPicker
             android:id="@+id/num_input"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="10dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"/>
@@ -39,11 +50,12 @@
         <LinearLayout
                 android:layout_width="fill_parent"
                 android:layout_height="150dp"
-                android:layout_weight="1">
+                android:layout_weight="1"
+                android:layout_gravity="center">
             <Button
                     android:id="@+id/btn_scan2"
-                    android:layout_margin="30dp"
-                    android:layout_width="match_parent"
+                    android:layout_margin="40dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:background="@drawable/jin"/>
@@ -52,11 +64,12 @@
         <LinearLayout
                 android:layout_width="fill_parent"
                 android:layout_height="150dp"
-                android:layout_weight="1">
+                android:layout_weight="1"
+                android:layout_gravity="center">
             <Button
                     android:id="@+id/btn_scan3"
-                    android:layout_margin="30dp"
-                    android:layout_width="match_parent"
+                    android:layout_margin="40dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:background="@drawable/chu"/>
