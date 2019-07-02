@@ -106,7 +106,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btn_scan3:
                 request("出");
-                generateQrcode();
                 break;
             case R.id.btn_scan4:
                 generateQrcode();
