@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.*;
 import android.provider.MediaStore;
@@ -22,6 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.alibaba.fastjson.JSON;
 import com.example.xch.scanzbar.zbar.CaptureActivity;
+import com.example.xch.scanzbar.zbar.MakeQRCodeUtil;
 import com.xuexiang.xqrcode.XQRCode;
 import com.xuexiang.xui.XUI;
 import okhttp3.OkHttpClient;
@@ -332,7 +334,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         //获取扫描结果
                         Bundle bundle = data.getExtras();
                         String result = bundle.getString(CaptureActivity.EXTRA_STRING);
-                        tv_scanResult.setText("扫描结果：" + result);
+                        tv_scanResult.setText(result);
                     }
                 }
                 break;
@@ -340,8 +342,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (resultCode == RESULT_OK) {
                     try {
                         Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
-                        Bitmap qrcode = XQRCode.createQRCodeWithLogo("远大阀门208##305", bitmap);
-                        saveImageToGallery(qrcode);
+                        Bitmap qrcode = XQRCode.createQRCodeWithLogo("远大阀门208##305",bitmap);
+                        Bitmap finalCode =MakeQRCodeUtil.composeWatermark(bitmap,qrcode);
+                        saveImageToGallery(finalCode);
                         Toast.makeText(this, "图片二维码已保存到相册", Toast.LENGTH_LONG).show();
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
