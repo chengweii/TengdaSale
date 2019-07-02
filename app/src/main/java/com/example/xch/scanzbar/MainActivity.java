@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void generateQrcode() {
         try {
-            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.raw.zhoucheng);
             Bitmap qrcode = XQRCode.createQRCodeWithLogo("远大阀门208##305", bitmap);
             String filePath = saveImageToGallery(qrcode);
             Toast.makeText(this, filePath, Toast.LENGTH_LONG).show();
