@@ -73,6 +73,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         num_input.setMaxValue(100);
         //设置默认的位置
         num_input.setValue(1);
+
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.CAMERA,Manifest.permission.INTERNET,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE},
+                1);
     }
 
     /**
@@ -112,31 +116,42 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void generateQrcode() {
         try {
-            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.raw.zhoucheng);
-            Bitmap qrcode = XQRCode.createQRCodeWithLogo("远大阀门208##305", bitmap);
-            String filePath = saveImageToGallery(qrcode);
-            Toast.makeText(this, filePath, Toast.LENGTH_LONG).show();
-
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            Uri uri;
-            try {
-                if (Build.VERSION.SDK_INT >= 24) {
-                    File file = new File("content://com.example.xch.scanzbar.fileProvider/files/" + filePath);
-                    Toast.makeText(this, file.getPath(), Toast.LENGTH_LONG).show();
-                    uri = FileProvider.getUriForFile(MainActivity.this, getApplicationContext().getPackageName() + ".fileProvider", file);
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                } else {
-                    uri = Uri.fromFile(new File(this.getExternalFilesDir(null),filePath));
-                }
-                intent.setDataAndType(uri, "image/*");
-                startActivity(intent);
-            }catch (Throwable t){
-                printException(t);
-            }
-
+            takePhoto();
         } catch (Throwable t) {
             printException(t);
+        }
+    }
+
+    private Uri imageUri;
+    public static final int TAKE_PHOTO = 0x0003;
+    /**
+     *拍照获取图片
+     **/
+    public void takePhoto() {
+        String status= Environment.getExternalStorageState();
+        if(status.equals(Environment.MEDIA_MOUNTED)) {
+            //创建File对象，用于存储拍照后的图片
+            File outputImage = new File(getExternalCacheDir(), "output_image.jpg");
+            try {
+                if (outputImage.exists()) {
+                    outputImage.delete();
+                }
+                outputImage.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (Build.VERSION.SDK_INT >= 24) {
+                imageUri = FileProvider.getUriForFile(this, "com.example.xch.scanzbar.fileProvider", outputImage);
+            } else {
+                imageUri = Uri.fromFile(outputImage);
+            }
+            //启动相机程序
+            Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+            startActivityForResult(intent, TAKE_PHOTO);
+        }else
+        {
+            Toast.makeText(MainActivity.this, "没有储存卡",Toast.LENGTH_LONG).show();
         }
     }
 
@@ -173,7 +188,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public String saveImageToGallery(Bitmap bmp) {
         //生成路径
-        File appDir = this.getExternalFilesDir(null);
+        File appDir = new File(Environment.getExternalStorageDirectory().getPath() + "/DCIM/Camera/");
 
         //文件名为时间
         long timeStamp = System.currentTimeMillis();
@@ -188,6 +203,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             fos = new FileOutputStream(file);
             bmp.compress(Bitmap.CompressFormat.JPEG, 100, fos);
             fos.flush();
+
+            Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            Uri uri = Uri.fromFile(file);
+            intent.setData(uri);
+            this.getApplication().sendBroadcast(intent);
 
             return fileName;
         } catch (FileNotFoundException e) {
@@ -313,6 +333,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Bundle bundle = data.getExtras();
                         String result = bundle.getString(CaptureActivity.EXTRA_STRING);
                         tv_scanResult.setText("扫描结果：" + result);
+                    }
+                }
+                break;
+            case TAKE_PHOTO :
+                if (resultCode == RESULT_OK) {
+                    try {
+                        Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
+                        Bitmap qrcode = XQRCode.createQRCodeWithLogo("远大阀门208##305", bitmap);
+                        saveImageToGallery(qrcode);
+                        Toast.makeText(this, "图片二维码已保存到相册", Toast.LENGTH_LONG).show();
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
                     }
                 }
                 break;

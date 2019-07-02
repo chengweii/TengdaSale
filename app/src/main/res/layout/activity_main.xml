@@ -22,19 +22,23 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:textSize="32sp"
-            android:text="请扫描配件二维码"/>
-
-    <TextView
-            android:id="@+id/tv_scanResult2"
-            android:layout_width="match_parent"
-            android:gravity="center"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:textSize="32sp"
-            android:text="配件名称"/>
+            android:text="配件二维码"/>
 
     <EditText
-            android:id="@+id/phonenumber"
+            android:id="@+id/partsName"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:padding="5dp"
+            android:hint="配件名称"
+            android:inputType="phone"
+            android:textSize="28sp"/>
+
+    <EditText
+            android:id="@+id/partsPrice"
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:layout_centerVertical="true"
@@ -57,28 +61,15 @@
             android:hint="配件数量"
             android:layout_gravity="center"/>
 
-    <Button
-            android:id="@+id/btn_scan4"
-            android:layout_marginTop="10dp"
-            android:layout_marginLeft="20dp"
-            android:layout_marginRight="20dp"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:layout_gravity="center"
-            android:background="@drawable/chuhuo"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:text="打印二维码"/>
-
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
                   xmlns:tools="http://schemas.android.com/tools"
                   android:layout_width="match_parent"
-                  android:layout_height="match_parent"
+                  android:layout_height="80dp"
                   android:orientation="horizontal"
                   tools:context=".MainActivity">   
         <LinearLayout
                 android:layout_width="fill_parent"
-                android:layout_height="150dp"
+                android:layout_height="80dp"
                 android:layout_weight="1"
                 android:layout_gravity="center_horizontal">
             <Button
@@ -87,6 +78,8 @@
                     android:layout_height="60dp"
                     android:layout_marginLeft="30dp"
                     android:layout_marginRight="30dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="5dp"
                     android:layout_gravity="center"
                     android:background="@drawable/jinhuo"
                     android:textSize="28sp"
@@ -96,7 +89,7 @@
 
         <LinearLayout
                 android:layout_width="fill_parent"
-                android:layout_height="150dp"
+                android:layout_height="80dp"
                 android:layout_weight="1"
                 android:layout_gravity="center_horizontal">
             <Button
@@ -105,6 +98,8 @@
                     android:layout_height="60dp"
                     android:layout_marginLeft="30dp"
                     android:layout_marginRight="30dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="5dp"
                     android:layout_gravity="center"
                     android:background="@drawable/chuhuo"
                     android:textSize="28sp"
@@ -112,4 +107,18 @@
                     android:text=" 出 货 "/>
         </LinearLayout>
     </LinearLayout>
+
+    <Button
+            android:id="@+id/btn_scan4"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_gravity="center"
+            android:background="@drawable/chuhuo"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:text="打印二维码"/>
 </LinearLayout>
