@@ -2,14 +2,15 @@ package com.example.xch.scanzbar;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.net.Uri;
-import android.os.*;
+import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -17,10 +18,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.Button;
-import android.widget.NumberPicker;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 import com.alibaba.fastjson.JSON;
 import com.example.xch.scanzbar.zbar.CaptureActivity;
 import com.example.xch.scanzbar.zbar.MakeQRCodeUtil;
@@ -31,21 +29,23 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 import java.io.*;
+import java.math.BigDecimal;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private Button btn_scan;
-    private TextView tv_scanResult;
-    private NumberPicker num_input;
+    private TextView partsCode;
+    private EditText partsName;
+    private NumberPicker partsNum;
+    private EditText partsPrice;
     private Button btn_scan2;
     private Button btn_scan3;
     private Button btn_scan4;
     private static final int REQUEST_CODE_SCAN = 0x0000;// 扫描二维码
-
-    //声明一个AlertDialog构造器
-    private AlertDialog.Builder builder;
 
     private String[] numbers = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "10+"};
 
@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         initUI();
         setContentView(R.layout.activity_main);
         btn_scan = (Button) findViewById(R.id.btn_scan);
-        tv_scanResult = (TextView) findViewById(R.id.tv_scanResult);
+        partsCode = (TextView) findViewById(R.id.partsCode);
         btn_scan.setOnClickListener(this);
 
         btn_scan2 = (Button) findViewById(R.id.btn_scan2);
@@ -67,17 +67,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_scan4 = (Button) findViewById(R.id.btn_scan4);
         btn_scan4.setOnClickListener(this);
 
-        num_input = (NumberPicker) findViewById(R.id.num_input);
+        partsName = (EditText) findViewById(R.id.partsName);
+
+        partsPrice = (EditText) findViewById(R.id.partsPrice);
+
+        partsNum = (NumberPicker) findViewById(R.id.partsNum);
         //设置需要显示的内容数组
         //num_input.setDisplayedValues(numbers);
         //设置最大最小值
-        num_input.setMinValue(1);
-        num_input.setMaxValue(100);
+        partsNum.setMinValue(1);
+        partsNum.setMaxValue(100);
         //设置默认的位置
-        num_input.setValue(1);
+        partsNum.setValue(1);
 
         ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.CAMERA,Manifest.permission.INTERNET,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE},
+                new String[]{Manifest.permission.CAMERA, Manifest.permission.INTERNET, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE},
                 1);
     }
 
@@ -102,10 +106,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.btn_scan2:
-                request("入");
+                request(RequestType.IN);
                 break;
             case R.id.btn_scan3:
-                request("出");
+                request(RequestType.OUT);
                 break;
             case R.id.btn_scan4:
                 generateQrcode();
@@ -117,6 +121,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void generateQrcode() {
         try {
+            String partsNameValue = partsName.getText().toString();
+            String partsPriceValue = partsPrice.getText().toString();
+            if (partsNameValue == null || "".equals(partsNameValue.trim())) {
+                Toast.makeText(MainActivity.this, "请输入配件名称", Toast.LENGTH_LONG).show();
+                return;
+            }
+            if (partsPriceValue == null || "".equals(partsPriceValue.trim())) {
+                Toast.makeText(MainActivity.this, "请输入配件价格", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+            String sd = sdf.format(new Date());
+            partsCode.setText(sd);
+
             takePhoto();
         } catch (Throwable t) {
             printException(t);
@@ -125,12 +144,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private Uri imageUri;
     public static final int TAKE_PHOTO = 0x0003;
+
     /**
-     *拍照获取图片
+     * 拍照获取图片
      **/
     public void takePhoto() {
-        String status= Environment.getExternalStorageState();
-        if(status.equals(Environment.MEDIA_MOUNTED)) {
+        String status = Environment.getExternalStorageState();
+        if (status.equals(Environment.MEDIA_MOUNTED)) {
             //创建File对象，用于存储拍照后的图片
             File outputImage = new File(getExternalCacheDir(), "output_image.jpg");
             try {
@@ -150,40 +170,69 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
             intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
             startActivityForResult(intent, TAKE_PHOTO);
-        }else
-        {
-            Toast.makeText(MainActivity.this, "没有储存卡",Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(MainActivity.this, "没有储存卡", Toast.LENGTH_LONG).show();
         }
     }
 
-    private void request(final String type) {
-        try {
-            new AnsyTry("https://used-api.jd.com/auction/detail?auctionId=114830306", (response) -> {
-                if (response != null) {
-                    try {
-                        Detail detail = JSON.parseObject(response, Detail.class);
-                        String result = "";
-                        if (detail != null && detail.data != null) {
-                            result = detail.data.freightAreaText;
+    private void request(final RequestType type) {
+        String partsCodeValue = partsCode.getText().toString();
+        String partsNameValue = partsName.getText().toString();
+        String partsPriceValue = partsPrice.getText().toString();
+        if (partsCodeValue == null || "".equals(partsCodeValue.trim())) {
+            Toast.makeText(MainActivity.this, "请先扫描配件信息", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (partsNameValue == null || "".equals(partsNameValue.trim())) {
+            Toast.makeText(MainActivity.this, "请先扫描配件信息", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (partsPriceValue == null || "".equals(partsPriceValue.trim())) {
+            Toast.makeText(MainActivity.this, "请先扫描配件信息", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        String opreateType = RequestType.IN == type ? "进货" : "出货";
+        BigDecimal amount = BigDecimal.valueOf(partsNum.getValue()).multiply(BigDecimal.valueOf(Double.parseDouble(partsPriceValue)));
+        String msg = String.format("【%s】【%s】【%s件】完成，总金额【%s元】。", opreateType, partsNameValue, partsNum.getValue(), amount);
+        String confirmMsg = String.format("确认【%s】【%s】【%s件】，总金额【%s元】？", opreateType, partsNameValue, partsNum.getValue(), amount);
+        showConfirmMsg(confirmMsg, "", (data) -> {
+            try {
+                new AnsyTry("https://used-api.jd.com/auction/detail?auctionId=114830306", (response) -> {
+                    if (response != null) {
+                        try {
+                            Detail detail = JSON.parseObject(response, Detail.class);
+                            String result = "";
+                            if (detail != null && detail.data != null) {
+                                result = detail.data.freightAreaText;
+                            }
+
+                            showMsg(msg, "");
+                        } catch (Throwable t) {
+                            showMsg("操作失败，请先手动记账，然后稍后再试。", "操作失败，请先手动记账，然后稍后再试。操作类型：" + opreateType);
                         }
-                        showMsg(String.format("%s %s,%s个,响应1：%s", type, tv_scanResult.getText(), num_input.getValue(), result));
-                    } catch (Throwable t) {
-                        showMsg("不好疑似出问题了，" + t.getMessage());
                     }
-                }
-            }).execute(tv_scanResult.getText().toString(), String.valueOf(num_input.getValue()));
-        } catch (Throwable t) {
-            showMsg("不好疑似出问题了，手动弄吧：" + t.getMessage());
-        }
+                }).execute();
+            } catch (Throwable t) {
+                showMsg("操作失败，请先手动记账，然后稍后再试。", "操作失败，请先手动记账，然后稍后再试。操作类型：" + opreateType);
+            }
+        });
     }
 
-    private void printException(Throwable e){
-        if (e == null){
+    public enum RequestType {
+        /**
+         *
+         */
+        IN, OUT;
+    }
+
+    private void printException(Throwable e) {
+        if (e == null) {
             return;
         }
         StringWriter stringWriter = new StringWriter();
         e.printStackTrace(new PrintWriter(stringWriter));
-        String msg =  stringWriter.toString();
+        String msg = stringWriter.toString();
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
 
@@ -253,15 +302,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private final OkHttpClient client = new OkHttpClient();
 
-    public interface HttpCallback {
-        void execute(String response);
+    public interface Callback {
+        void execute(String data);
     }
 
     private class AnsyTry extends AsyncTask<String, Integer, String> {
         private String url;
-        private HttpCallback httpCallback;
+        private Callback httpCallback;
 
-        public AnsyTry(String url, HttpCallback httpCallback) {
+        public AnsyTry(String url, Callback httpCallback) {
             this.httpCallback = httpCallback;
             this.url = url;
         }
@@ -290,13 +339,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void showMsg(String msg) {
-        builder = new AlertDialog.Builder(this);
-        builder.setTitle("标题");
-        builder.setMessage(msg);
-        builder.setCancelable(true);
-        AlertDialog dialog = builder.create();
-        dialog.show();
+    private AlertDialog.Builder alertBuilder;
+
+    private void showMsg(String title, String msg) {
+        alertBuilder = new AlertDialog.Builder(this).setTitle(title).setMessage(msg).setCancelable(true);
+        alertBuilder.create().show();
+    }
+
+    private AlertDialog.Builder confirmBuilder;
+
+    private void showConfirmMsg(String title, String msg, Callback clickCallback) {
+        confirmBuilder = new AlertDialog.Builder(this).setTitle(title).setMessage(msg).setCancelable(true).setPositiveButton("不对", (dialog, which) -> {
+        }).setNegativeButton("好的", (dialog, which) -> {
+            clickCallback.execute(null);
+        });
+        confirmBuilder.create().show();
     }
 
     /**
@@ -321,7 +378,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -333,18 +389,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         //获取扫描结果
                         Bundle bundle = data.getExtras();
                         String result = bundle.getString(CaptureActivity.EXTRA_STRING);
-                        tv_scanResult.setText(result);
+                        try {
+                            if (!result.matches("^.+##.+##.+$")) {
+                                throw new RuntimeException("配件二维码内容错误");
+                            }
+                            String[] contents = result.split("##");
+                            partsCode.setText(contents[0]);
+                            partsName.setText(contents[1]);
+                            partsPrice.setText(contents[2]);
+                        } catch (Throwable t) {
+                            Toast.makeText(this, "配件二维码内容错误：" + result, Toast.LENGTH_LONG).show();
+                        }
                     }
                 }
                 break;
-            case TAKE_PHOTO :
+            case TAKE_PHOTO:
                 if (resultCode == RESULT_OK) {
                     try {
+                        String partsCodeValue = partsCode.getText().toString();
+                        String partsNameValue = partsName.getText().toString();
+                        String partsPriceValue = partsPrice.getText().toString();
+
+                        String codeValue = partsCodeValue + "##" + partsNameValue + "##" + partsPriceValue;
+
                         Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
-                        Bitmap qrcode = XQRCode.createQRCodeWithLogo("远大阀门208##305",bitmap);
-                        Bitmap finalCode =MakeQRCodeUtil.composeWatermark(bitmap,qrcode);
+                        Bitmap qrcode = XQRCode.createQRCodeWithLogo(codeValue, bitmap);
+                        Bitmap finalCode = MakeQRCodeUtil.composeWatermark(bitmap, qrcode);
                         saveImageToGallery(finalCode);
-                        Toast.makeText(this, "图片二维码已保存到相册", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "配件二维码已保存到相册", Toast.LENGTH_LONG).show();
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     }

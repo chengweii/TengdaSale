@@ -16,14 +16,13 @@
             android:background="@drawable/saosao"/>
 
     <TextView
-            android:id="@+id/tv_scanResult"
+            android:id="@+id/partsCode"
             android:layout_width="match_parent"
             android:gravity="center"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:textSize="32sp"
             android:text="配件二维码"/>
-
     <EditText
             android:id="@+id/partsName"
             android:layout_width="match_parent"
@@ -34,7 +33,7 @@
             android:layout_marginRight="20dp"
             android:padding="5dp"
             android:hint="配件名称"
-            android:inputType="phone"
+            android:inputType="text"
             android:textSize="28sp"/>
 
     <EditText
@@ -47,11 +46,11 @@
             android:layout_marginRight="20dp"
             android:padding="5dp"
             android:hint="配件金额"
-            android:inputType="phone"
+            android:inputType="numberDecimal"
             android:textSize="28sp"/>
 
     <com.example.xch.scanzbar.zbar.view.TextConfigNumberPicker
-            android:id="@+id/num_input"
+            android:id="@+id/partsNum"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
             android:layout_marginTop="10dp"
