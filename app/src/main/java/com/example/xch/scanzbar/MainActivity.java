@@ -17,6 +17,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.*;
 import com.alibaba.fastjson.JSON;
@@ -24,14 +25,12 @@ import com.example.xch.scanzbar.zbar.CaptureActivity;
 import com.example.xch.scanzbar.zbar.MakeQRCodeUtil;
 import com.xuexiang.xqrcode.XQRCode;
 import com.xuexiang.xui.XUI;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import com.xuexiang.xui.widget.popupwindow.bar.CookieBar;
+import com.xuexiang.xui.widget.toast.XToast;
+import okhttp3.*;
 
 import java.io.*;
 import java.math.BigDecimal;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -124,11 +123,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             String partsNameValue = partsName.getText().toString();
             String partsPriceValue = partsPrice.getText().toString();
             if (partsNameValue == null || "".equals(partsNameValue.trim())) {
-                Toast.makeText(MainActivity.this, "请输入配件名称", Toast.LENGTH_LONG).show();
+                showWarnAlert("请先扫描配件信息", "请输入配件名称");
                 return;
             }
             if (partsPriceValue == null || "".equals(partsPriceValue.trim())) {
-                Toast.makeText(MainActivity.this, "请输入配件价格", Toast.LENGTH_LONG).show();
+                showWarnAlert("请先扫描配件信息", "请输入配件价格");
                 return;
             }
 
@@ -175,46 +174,134 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    public static class AddRecordParams {
+        private byte type;
+        private String partsCode;
+        private String partsName;
+        private int partsNum;
+        private BigDecimal partsPrice;
+
+        public byte getType() {
+            return type;
+        }
+
+        public void setType(byte type) {
+            this.type = type;
+        }
+
+        public String getPartsCode() {
+            return partsCode;
+        }
+
+        public void setPartsCode(String partsCode) {
+            this.partsCode = partsCode;
+        }
+
+        public String getPartsName() {
+            return partsName;
+        }
+
+        public void setPartsName(String partsName) {
+            this.partsName = partsName;
+        }
+
+        public int getPartsNum() {
+            return partsNum;
+        }
+
+        public void setPartsNum(int partsNum) {
+            this.partsNum = partsNum;
+        }
+
+        public BigDecimal getPartsPrice() {
+            return partsPrice;
+        }
+
+        public void setPartsPrice(BigDecimal partsPrice) {
+            this.partsPrice = partsPrice;
+        }
+    }
+
+    private void showSuccessAlert(String title,String msg){
+        CookieBar.builder(MainActivity.this)
+                .setTitle(title)
+                .setMessage(msg)
+                .setDuration(3000)
+                .setBackgroundColor(R.color.xui_config_color_blue)
+                .setLayoutGravity(Gravity.TOP)
+                .show();
+    }
+
+    private void showErrorAlert(String title,String msg){
+        CookieBar.builder(MainActivity.this)
+                .setTitle(title)
+                .setMessage(msg)
+                .setDuration(10000)
+                .setBackgroundColor(R.color.xui_config_color_red)
+                .setLayoutGravity(Gravity.TOP)
+                .show();
+    }
+
+    private void showWarnAlert(String title,String msg){
+        CookieBar.builder(MainActivity.this)
+                .setTitle(title)
+                .setMessage(msg)
+                .setDuration(3000)
+                .setBackgroundColor(R.color.xui_config_color_red)
+                .setLayoutGravity(Gravity.TOP)
+                .show();
+    }
+
     private void request(final RequestType type) {
         String partsCodeValue = partsCode.getText().toString();
         String partsNameValue = partsName.getText().toString();
         String partsPriceValue = partsPrice.getText().toString();
         if (partsCodeValue == null || "".equals(partsCodeValue.trim())) {
-            Toast.makeText(MainActivity.this, "请先扫描配件信息", Toast.LENGTH_LONG).show();
+            showWarnAlert("请先扫描配件信息", "请输入配件条码");
             return;
         }
         if (partsNameValue == null || "".equals(partsNameValue.trim())) {
-            Toast.makeText(MainActivity.this, "请先扫描配件信息", Toast.LENGTH_LONG).show();
+            showWarnAlert("请先扫描配件信息", "请输入配件名称");
             return;
         }
         if (partsPriceValue == null || "".equals(partsPriceValue.trim())) {
-            Toast.makeText(MainActivity.this, "请先扫描配件信息", Toast.LENGTH_LONG).show();
+            showWarnAlert("请先扫描配件信息", "请输入配件价格");
             return;
         }
 
         String opreateType = RequestType.IN == type ? "进货" : "出货";
+        byte opType = RequestType.IN == type ? (byte) 1 : (byte) 2;
+
         BigDecimal amount = BigDecimal.valueOf(partsNum.getValue()).multiply(BigDecimal.valueOf(Double.parseDouble(partsPriceValue)));
         String msg = String.format("【%s】【%s】【%s件】完成，总金额【%s元】。", opreateType, partsNameValue, partsNum.getValue(), amount);
         String confirmMsg = String.format("确认【%s】【%s】【%s件】，总金额【%s元】？", opreateType, partsNameValue, partsNum.getValue(), amount);
         showConfirmMsg(confirmMsg, "", (data) -> {
             try {
-                new AnsyTry("https://used-api.jd.com/auction/detail?auctionId=114830306", (response) -> {
+                AddRecordParams addRecordParams = new AddRecordParams();
+                addRecordParams.setPartsCode(partsCodeValue);
+                addRecordParams.setPartsName(partsNameValue);
+                addRecordParams.setPartsNum(partsNum.getValue());
+                addRecordParams.setPartsPrice(BigDecimal.valueOf(Double.parseDouble(partsPriceValue)));
+                addRecordParams.setType(opType);
+
+                new AnsyTry(HOST + "sale_record/add", JSON.toJSONString(addRecordParams), (response) -> {
                     if (response != null) {
                         try {
-                            Detail detail = JSON.parseObject(response, Detail.class);
-                            String result = "";
-                            if (detail != null && detail.data != null) {
-                                result = detail.data.freightAreaText;
+                            if (response != null) {
+                                JsonResult detail = JSON.parseObject(response, JsonResult.class);
+                                if (detail != null && detail.code == 200) {
+                                    showSuccessAlert("保存成功",msg);
+                                } else {
+                                    showErrorAlert("保存失败",detail.msg);
+                                }
                             }
-
-                            showMsg(msg, "");
                         } catch (Throwable t) {
-                            showMsg("操作失败，请先手动记账，然后稍后再试。", "操作失败，请先手动记账，然后稍后再试。操作类型：" + opreateType);
+                            showErrorAlert("操作失败，请先手动记账，然后稍后再试。", "操作失败，请先手动记账，然后稍后再试。操作类型：" + opreateType);
                         }
                     }
                 }).execute();
             } catch (Throwable t) {
-                showMsg("操作失败，请先手动记账，然后稍后再试。", "操作失败，请先手动记账，然后稍后再试。操作类型：" + opreateType);
+                showErrorAlert("操作失败，请先手动记账，然后稍后再试。", "操作失败，请先手动记账，然后稍后再试。操作类型：" + opreateType);
             }
         });
     }
@@ -308,17 +395,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private class AnsyTry extends AsyncTask<String, Integer, String> {
         private String url;
+        private String paramJson;
         private Callback httpCallback;
 
-        public AnsyTry(String url, Callback httpCallback) {
+        public AnsyTry(String url, String paramJson, Callback httpCallback) {
             this.httpCallback = httpCallback;
             this.url = url;
+            this.paramJson = paramJson;
         }
 
         @Override
         protected String doInBackground(String... params) {
             try {
-                Request request = new Request.Builder().url(url).build();
+                MediaType json = MediaType.parse("application/json; charset=utf-8");
+                RequestBody body = RequestBody.create(json, paramJson);
+                Request request = new Request.Builder().url(url).post(body).build();
                 Response response = client.newCall(request).execute();
                 if (response.isSuccessful()) {
                     return response.body().string();
@@ -378,6 +469,68 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    private static final String HOST = "http://10.0.6.96:8080/";
+
+    public static class JsonResult {
+        private int code;
+        private String msg;
+        private Object result;
+
+        public int getCode() {
+            return code;
+        }
+
+        public void setCode(int code) {
+            this.code = code;
+        }
+
+        public String getMsg() {
+            return msg;
+        }
+
+        public void setMsg(String msg) {
+            this.msg = msg;
+        }
+
+        public Object getResult() {
+            return result;
+        }
+
+        public void setResult(Object result) {
+            this.result = result;
+        }
+    }
+
+    public static class AddParams {
+        private String partsCode;
+        private String partsName;
+        private BigDecimal currentPrice;
+
+        public String getPartsCode() {
+            return partsCode;
+        }
+
+        public void setPartsCode(String partsCode) {
+            this.partsCode = partsCode;
+        }
+
+        public String getPartsName() {
+            return partsName;
+        }
+
+        public void setPartsName(String partsName) {
+            this.partsName = partsName;
+        }
+
+        public BigDecimal getCurrentPrice() {
+            return currentPrice;
+        }
+
+        public void setCurrentPrice(BigDecimal currentPrice) {
+            this.currentPrice = currentPrice;
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -398,7 +551,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             partsName.setText(contents[1]);
                             partsPrice.setText(contents[2]);
                         } catch (Throwable t) {
-                            Toast.makeText(this, "配件二维码内容错误：" + result, Toast.LENGTH_LONG).show();
+                            showErrorAlert("扫描二维码异常","配件二维码内容错误：" + result);
                         }
                     }
                 }
@@ -415,8 +568,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
                         Bitmap qrcode = XQRCode.createQRCodeWithLogo(codeValue, bitmap);
                         Bitmap finalCode = MakeQRCodeUtil.composeWatermark(bitmap, qrcode);
-                        saveImageToGallery(finalCode);
-                        Toast.makeText(this, "配件二维码已保存到相册", Toast.LENGTH_LONG).show();
+
+
+                        String confirmMsg = String.format("确认新增配件【%s】，售价【%s元】？", partsNameValue, partsPriceValue);
+                        showConfirmMsg(confirmMsg, "", (data1) -> {
+                            saveImageToGallery(finalCode);
+                            showSuccessAlert("配件二维码已保存到相册", "请到相册打印纸质二维码后续使用");
+
+                            try {
+                                AddParams addParams = new AddParams();
+                                addParams.setPartsCode(partsCodeValue);
+                                addParams.setPartsName(partsNameValue);
+                                addParams.setCurrentPrice(BigDecimal.valueOf(Double.parseDouble(partsPriceValue)));
+                                new AnsyTry(HOST + "sale_parts/add", JSON.toJSONString(addParams), (response) -> {
+                                    if (response != null) {
+                                        try {
+                                            JsonResult detail = JSON.parseObject(response, JsonResult.class);
+                                            if (detail != null && detail.code == 200) {
+                                                showSuccessAlert("保存成功",partsNameValue);
+                                            } else {
+                                                showErrorAlert("保存失败",detail.msg);
+                                            }
+                                        } catch (Throwable t) {
+                                            showErrorAlert("操作失败，请到PC端新增或稍后再试。", "操作失败，请到PC端新增或稍后再试。");
+                                        }
+                                    }
+                                }).execute();
+                            } catch (Throwable t) {
+                                showErrorAlert("操作失败，请到PC端新增或稍后再试。", "操作失败，请到PC端新增或稍后再试。");
+                            }
+                        });
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     }

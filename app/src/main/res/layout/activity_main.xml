@@ -109,7 +109,7 @@
 
     <Button
             android:id="@+id/btn_scan4"
-            android:layout_marginTop="5dp"
+            android:layout_marginTop="20dp"
             android:layout_marginBottom="5dp"
             android:layout_marginLeft="30dp"
             android:layout_marginRight="30dp"
@@ -119,5 +119,5 @@
             android:background="@drawable/chuhuo"
             android:textSize="28sp"
             android:textStyle="bold"
-            android:text="打印二维码"/>
+            android:text="生成配件二维码"/>
 </LinearLayout>
